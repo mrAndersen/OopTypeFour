@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Oop type 4 :: GAME</title>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+</body>
+<style>
+    * {
+        border: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    #canvas {
+        margin: 1% auto;
+        background: #f3f4f6;
+        display: block;
+        border: solid 1px #000;
+    }
+</style>
+<script>
+    OopV4 = function () {
+        this.headImage = null;
+
+        this.interval = null;
+
+        this.head = [10, 10];
+        this.food = [15, 15, "4"];
+
+        this.tail = [];
+        this.tailSize = 0;
+
+        this.width = 850;
+        this.height = 850;
+
+        this.gridWidth = 50;
+        this.gridHeight = 50;
+
+        //l|r|b|t
+        this.direction = 'r';
+
+        this.canvas = document.getElementById('canvas');
+        this.ctx = this.canvas.getContext('2d');
+
+        this.sWidth = 0;
+        this.sHeight = 0;
+
+        this.loaded = false;
+
+        this.spawnFood = function () {
+            this.food[0] = Math.floor(Math.random() * this.sWidth);
+            this.food[1] = Math.floor(Math.random() * this.sHeight);
+            this.food[2] = Math.floor(Math.random() * 10);
+        };
+
+        this.drawFood = function () {
+            let text1 = "ООП";
+            let text2 = this.food[2];
+            let text3 = "типа";
+
+            this.ctx.font = "12px Verdana";
+            this.ctx.fillText(text1, (this.food[0] * this.gridWidth) + 10, (this.food[1] * this.gridHeight) + 15);
+            this.ctx.fillText(text2, (this.food[0] * this.gridWidth) + 22, (this.food[1] * this.gridHeight) + 30);
+            this.ctx.fillText(text3, (this.food[0] * this.gridWidth) + 10, (this.food[1] * this.gridHeight) + 45);
+
+            this.ctx.rect((this.food[0] * this.gridWidth), (this.food[1] * this.gridHeight), this.gridWidth, this.gridHeight);
+            this.ctx.lineWidth = "2";
+            this.ctx.strokeStyle = "red";
+            this.ctx.stroke();
+        };
+
+        this.drawHead = function () {
+            this.ctx.save();
+            this.ctx.drawImage(this.headImage, (this.head[0] * this.gridWidth), (this.head[1] * this.gridHeight), this.gridWidth, this.gridHeight);
+            this.ctx.restore();
+        };
+
+        this.draw = function () {
+            this.ctx.clearRect(0, 0, canvas.width, canvas.height);
+            this.drawGrid();
+
+            this.updateTail();
+            this.updateHead();
+
+            this.drawHead();
+            this.drawFood();
+            this.drawTail();
+
+            this.checkFoodCollision();
+
+            setTimeout(function () {
+                window.requestAnimationFrame(this.draw);
+            }.bind(this), 1000 / 10);
+        };
+
+        this.checkFoodCollision = function () {
+            if (this.food[0] === this.head[0] && this.food[1] === this.head[1]) {
+                this.spawnFood();
+                this.tailSize++;
+            }
+        };
+
+        this.drawRect = function (sx, sy, color) {
+            this.ctx.save();
+            this.ctx.fillStyle = color;
+            this.ctx.fillRect((sx * this.gridWidth), (sy * this.gridHeight), this.gridWidth, this.gridHeight);
+            this.ctx.restore();
+        };
+
+        this.updateTail = function () {
+            if (tailSize === 0) {
+                return;
+            }
+
+            this.tail.push([this.head[0], this.head[1]]);
+            this.tail = this.tail.slice(-this.tailSize);
+        };
+
+        this.drawTail = function () {
+            this.tail.forEach(function (v, k) {
+                this.drawRect(v[0], v[1], "#aaa");
+            }.bind(this));
+        };
+
+        this.updateHead = function () {
+            if (this.head[0] + 1 >= this.sWidth && this.direction === 'r') {
+                this.head[0] = 0;
+                return;
+            }
+
+            if (this.head[0] - 1 < 0 && this.direction === 'l') {
+                this.head[0] = sWidth;
+            }
+
+            if (this.head[1] + 1 >= this.sHeight && this.direction === 'b') {
+                this.head[1] = 0;
+                return;
+            }
+
+            if (this.head[1] - 1 < 0 && this.direction === 't') {
+                this.head[1] = sHeight;
+                return;
+            }
+
+            switch (this.direction) {
+                case 'l':
+                    this.head[0] -= 1;
+                    break;
+                case 'r':
+                    this.head[0] += 1;
+                    break;
+                case 'b':
+                    this.head[1] += 1;
+                    break;
+                case 't':
+                    this.head[1] -= 1;
+                    break;
+            }
+        };
+
+        this.line = function (x1, y1, x2, y2) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x1, y1);
+            this.ctx.lineWidth = 1;
+            this.ctx.strokeStyle = '#ddd';
+            this.ctx.lineTo(x2, y2);
+            this.ctx.stroke();
+        };
+
+        this.drawGrid = function () {
+            this.ctx.save();
+            for (let i = 0; i <= this.width; i++) {
+                if (i % this.gridWidth === 0 && i !== 0) {
+                    this.line(i, 0, i, this.height);
+                }
+            }
+
+            for (let j = 0; j <= this.height; j++) {
+                if (j % this.gridHeight === 0 && j !== 0) {
+                    this.line(0, j, this.width, j);
+                }
+            }
+            this.ctx.restore();
+        };
+
+        this.init = function () {
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+
+            this.ctx.translate(0.5, 0.5);
+            this.drawGrid();
+
+            this.sWidth = this.width / this.gridWidth;
+            this.sHeight = this.height / this.gridHeight;
+
+            this.spawnFood();
+
+            window.addEventListener('keydown', function (e) {
+                switch (e.which) {
+                    case 37:
+                        this.direction = 'l';
+                        break;
+                    case 38:
+                        this.direction = 't';
+                        break;
+                    case 39:
+                        this.direction = 'r';
+                        break;
+                    case 40:
+                        this.direction = 'b';
+                        break;
+                }
+            }.bind(this));
+
+            this.headImage = new Image();
+            this.headImage.onload = function () {
+                let event = new Event('gameLoaded');
+                window.dispatchEvent(event);
+            }.bind(this);
+            this.headImage.src = 'head.png';
+
+            window.requestAnimationFrame(this.draw);
+        };
+
+        this.init();
+
+    }();
+</script>
+</html>
