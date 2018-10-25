@@ -8,30 +8,86 @@
     <title>Oop type 4 :: GAME</title>
 </head>
 <body>
-<canvas id="canvas"></canvas>
-</body>
 <style>
+    @font-face {
+        font-family: 'PooFont';
+        src: url('PooCorny.ttf');
+    }
+
     * {
         border: none;
         margin: 0;
         padding: 0;
+        font-family: PooFont, serif;
     }
 
     #canvas {
         margin: 1% auto;
         background: #f3f4f6;
+        display: none;
+    }
+
+    #canvas.started {
         display: block;
-        border: solid 1px #000;
+    }
+
+    #logo {
+        width: 200px;
+        height: 208px;
+        background-image: url("bg.jpg");
+        float: left;
+    }
+
+    .menu {
+        float: left;
+        margin: 3vh 3vh;
+        color: #834924;
+        font-size: 45px;
+    }
+
+    .menu div {
+        cursor: pointer;
+    }
+
+    #main-menu {
+        width: 800px;
+        margin: 12vh auto;
+    }
+
+    #main-menu .button:hover {
+        color: #83811e;
     }
 </style>
+<canvas id="canvas"></canvas>
+<span style="
+    font-size: 40px;
+    transform: rotate(-90deg);
+    display: block;
+    left: 0;
+    top:20vh;
+    position: absolute;
+">Enterprise v2.0</span>
+<div id="main-menu">
+    <div id="logo"></div>
+    <div class="menu">
+        <div class="button start-button">HA4ATb</div>
+        <div class="button piss-button">ObOCCATb</div>
+    </div>
+</div>
+</body>
 <script>
     OopV4 = function () {
-        this.headImage = null;
+        this.images = {
+            'wp': 'wp.png',
+            'shit': 'shit.png',
+            'head': 'head.png'
+        };
 
         this.interval = null;
 
         this.head = [10, 10];
         this.food = [15, 15, "4"];
+        this.hook = [];
 
         this.tail = [];
         this.tailSize = 0;
@@ -52,57 +108,89 @@
         this.sHeight = 0;
 
         this.loaded = false;
+        this.lastUpdate = (+new Date());
+        this.updateFreq = 1000 / 12;
 
         this.spawnFood = function () {
             this.food[0] = Math.floor(Math.random() * this.sWidth);
             this.food[1] = Math.floor(Math.random() * this.sHeight);
-            this.food[2] = Math.floor(Math.random() * 10);
+            this.food[2] = Math.floor(Math.random() * 10) + 1;
+        };
+
+        this.spawnHook = function () {
+            this.hook[0] = Math.floor(Math.random() * this.sWidth);
+            this.hook[1] = Math.floor(Math.random() * this.sHeight);
+        };
+
+        this.destroyHook = function () {
+            this.hook = [];
+        };
+
+        this.drawHook = function () {
+            if (!this.hook[0] || !this.hook[1]) {
+                return;
+            }
+
+            this.ctx.drawImage(this.images['shit'], (this.hook[0] * this.gridWidth), (this.hook[1] * this.gridHeight), this.gridWidth, this.gridHeight);
         };
 
         this.drawFood = function () {
-            let text1 = "ООП";
-            let text2 = this.food[2];
-            let text3 = "типа";
-
-            this.ctx.font = "12px Verdana";
-            this.ctx.fillText(text1, (this.food[0] * this.gridWidth) + 10, (this.food[1] * this.gridHeight) + 15);
-            this.ctx.fillText(text2, (this.food[0] * this.gridWidth) + 22, (this.food[1] * this.gridHeight) + 30);
-            this.ctx.fillText(text3, (this.food[0] * this.gridWidth) + 10, (this.food[1] * this.gridHeight) + 45);
-
-            this.ctx.rect((this.food[0] * this.gridWidth), (this.food[1] * this.gridHeight), this.gridWidth, this.gridHeight);
-            this.ctx.lineWidth = "2";
-            this.ctx.strokeStyle = "red";
-            this.ctx.stroke();
+            this.ctx.drawImage(this.images['wp'], (this.food[0] * this.gridWidth), (this.food[1] * this.gridHeight), this.gridWidth, this.gridHeight);
         };
 
         this.drawHead = function () {
-            this.ctx.save();
-            this.ctx.drawImage(this.headImage, (this.head[0] * this.gridWidth), (this.head[1] * this.gridHeight), this.gridWidth, this.gridHeight);
-            this.ctx.restore();
+            this.ctx.drawImage(this.images['head'], (this.head[0] * this.gridWidth), (this.head[1] * this.gridHeight), this.gridWidth, this.gridHeight);
         };
 
-        this.draw = function () {
-            this.ctx.clearRect(0, 0, canvas.width, canvas.height);
-            this.drawGrid();
+        this.update = function () {
+            let time = (+new Date());
+
+            if (time - this.lastUpdate <= this.updateFreq) {
+                return;
+            }
+
+            if (Math.random() * 250 <= 5) {
+                this.spawnHook();
+            }
+
+            if (Math.random() * 250 <= 5) {
+                this.destroyHook();
+            }
 
             this.updateTail();
             this.updateHead();
+            this.checkFoodCollision();
+            this.lastUpdate = time;
+        };
 
+        this.frame = function () {
+            this.update();
+            this.draw();
+
+            setTimeout(function () {
+                window.requestAnimationFrame(this.frame);
+            }.bind(this), 1000 / 33);
+        }.bind(this);
+
+        this.draw = function () {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+            this.drawGrid();
             this.drawHead();
             this.drawFood();
             this.drawTail();
-
-            this.checkFoodCollision();
-
-            setTimeout(function () {
-                window.requestAnimationFrame(this.draw);
-            }.bind(this), 1000 / 10);
+            this.drawHook();
         };
 
         this.checkFoodCollision = function () {
             if (this.food[0] === this.head[0] && this.food[1] === this.head[1]) {
                 this.spawnFood();
                 this.tailSize++;
+            }
+
+            if (this.hook[0] === this.head[0] && this.hook[1] === this.head[1]) {
+                this.tailSize += 3;
+                this.destroyHook();
             }
         };
 
@@ -114,7 +202,7 @@
         };
 
         this.updateTail = function () {
-            if (tailSize === 0) {
+            if (this.tailSize === 0) {
                 return;
             }
 
@@ -135,7 +223,7 @@
             }
 
             if (this.head[0] - 1 < 0 && this.direction === 'l') {
-                this.head[0] = sWidth;
+                this.head[0] = this.sWidth;
             }
 
             if (this.head[1] + 1 >= this.sHeight && this.direction === 'b') {
@@ -144,7 +232,7 @@
             }
 
             if (this.head[1] - 1 < 0 && this.direction === 't') {
-                this.head[1] = sHeight;
+                this.head[1] = this.sHeight;
                 return;
             }
 
@@ -165,16 +253,17 @@
         };
 
         this.line = function (x1, y1, x2, y2) {
+            this.ctx.save();
             this.ctx.beginPath();
             this.ctx.moveTo(x1, y1);
             this.ctx.lineWidth = 1;
             this.ctx.strokeStyle = '#ddd';
             this.ctx.lineTo(x2, y2);
             this.ctx.stroke();
+            this.ctx.restore();
         };
 
         this.drawGrid = function () {
-            this.ctx.save();
             for (let i = 0; i <= this.width; i++) {
                 if (i % this.gridWidth === 0 && i !== 0) {
                     this.line(i, 0, i, this.height);
@@ -186,7 +275,6 @@
                     this.line(0, j, this.width, j);
                 }
             }
-            this.ctx.restore();
         };
 
         this.init = function () {
@@ -218,18 +306,41 @@
                 }
             }.bind(this));
 
-            this.headImage = new Image();
-            this.headImage.onload = function () {
-                let event = new Event('gameLoaded');
-                window.dispatchEvent(event);
-            }.bind(this);
-            this.headImage.src = 'head.png';
+            let loadedImages = 0;
 
-            window.requestAnimationFrame(this.draw);
+            Object.keys(this.images).forEach(function (v, k) {
+                let name = v;
+                let src = this.images[v];
+
+                this.images[name] = new Image();
+                this.images[name].src = src;
+                this.images[name].onload = function () {
+                    loadedImages++;
+
+                    if (loadedImages = Object.keys(this.images).length) {
+                        window.dispatchEvent(new Event('gameLoaded'));
+                    }
+                }.bind(this);
+            }.bind(this));
+
+            document.querySelector('#main-menu').style.display = 'none';
+            this.canvas.style.display = 'block';
+
+            window.addEventListener('gameLoaded', function (e) {
+                window.requestAnimationFrame(this.frame);
+            }.bind(this));
+        };
+    };
+    window.OopV4 = new OopV4();
+
+    window.onload = function () {
+        document.querySelector('.start-button').onclick = function (e) {
+            window.OopV4.init();
         };
 
-        this.init();
-
-    }();
+        document.querySelector('.piss-button').onclick = function (e) {
+            alert('Функциоанл обоссывания в данный момент в стадии разработки');
+        };
+    };
 </script>
 </html>
